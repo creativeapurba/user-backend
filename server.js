@@ -37,14 +37,21 @@ app.post("/register", (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const username = req.body.username;
-    connection.query(`INSERT INTO users 
+    connection.query(`INSERT IGNORE INTO users 
                     (username, password, email)
                     VALUES 
                     ("${username}", "${password}", "${email}")`,
         (err, result, fields) => {
             if (err) console.log(err.message);
             let data = JSON.parse(JSON.stringify(result));
-            res.status(200).send(data);
+            if(data.affectedRows){
+                console.log("User Created");
+                res.status(201).send("User Created");
+            }
+            else{
+                console.log("User Already Exists");
+                res.status(200).send("User Already Exists")
+            }
         }
     )
 
@@ -69,6 +76,27 @@ app.post("/login", (req, res) => {
             res.send("User Not-found")
         }
     });
+});
+
+// FORGOT PASSWORD
+app.post("/forgot", (req, res)=>{
+    const username = req.body.username;
+    const new_password = req.body.password;
+    // const rePassword = req.body.rePassword;
+    connection.query(`UPDATE users SET password = "${new_password}" 
+        WHERE username = "${username}"`, (err, result, fields) => {
+            if (err) console.log(err.message);
+            let data = JSON.parse(JSON.stringify(result));
+            console.log(data);
+
+            if (data.affectedRows) {
+                res.status(200).send("Password Updated");
+            } 
+            else {
+                res.status(403).send("Invalid Input");
+            }
+        });
+
 });
 
 app.listen(8080, () => {
