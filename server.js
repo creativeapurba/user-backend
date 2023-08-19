@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require('mongoose');
 const Post = require("./Post")
 const mysql = require('mysql');
-const { MongoErrorLabel } = require("mongodb");
 
 const app = express();
 app.use(express.json())
