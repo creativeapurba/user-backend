@@ -15,7 +15,7 @@ mongoose.connect(mongoUrl + 'atgdb')
     .then(() => console.log("MongoDB Connected"))
     .catch(err => console.error(err.message));
 
-
+// MYSQL DETAILS
 const connection = mysql.createConnection({
     host: 'db4free.net',
     user: 'omprakash',
@@ -111,16 +111,6 @@ app.post("/forgot", (req, res) => {
 
 });
 
-// // POST SCHEMA
-// const postSchema = new mongoose.Schema({
-//     username: String,
-//     title: String,
-//     body: String,
-//     likes: Array,
-//     likeCount: Number,
-//     comment: Array
-// });
-
 // CREATE POST
 app.post("/createpost/:username", (req, res) => {
     const username = req.params.username
@@ -134,24 +124,112 @@ app.post("/createpost/:username", (req, res) => {
 
     post.save().then(() => {
         res.status(201).send("Post created")
-    }).catch((err) => res.send(err.message))
+    }).catch((err) => res.status(500).send(err.message))
 })
 
 // READ POSTS
 app.get("/posts/:username", (req, res) => {
     const username = req.params.username;
-    Post.find({ username: username }).then((result)=>{
-        res.send(result)
+    Post.find({ username: username }).then((result) => {
+        if (result.length > 0) {
+            res.status(200).send(result)
+        }
+        else {
+            res.status(404).send("User does not have any post")
+        }
+    })
+})
+app.get("/post/:postId", (req, res) => {
+    const postId = req.params.postId;
+    // console.log(postId);
+    Post.findById(postId).then((result) => {
+        if (result != null) {
+            res.status(200).send(result)
+        }
+        else {
+            res.status(404).send("Post not found")
+        }
     })
 })
 
 // UPDATE POST
+app.put("/posts/:postId", (req, res) => {
+    const postId = req.params.postId;
+    const newTitle = req.body.title;
+    const newBody = req.body.body;
+
+    Post.findOneAndUpdate({ _id: postId }, { title: newTitle, body: newBody })
+        .then((result) => {
+            if (result != null) {
+                res.status(200).send("Updated")
+            }
+            else {
+                res.status(404).send("No Record found")
+            }
+        })
+        .catch((err) => res.status(500).send(err.message))
+
+})
 
 // DELETE POST
+app.delete("/posts/:postId", (req, res) => {
+    const postId = req.params.postId;
+    Post.findOneAndDelete({ _id: postId })
+        .then((result) => {
+            if (result != null) {
+                res.status(200).send("Deleted")
+            }
+            else {
+                res.status(404).send("No Record found")
+            }
+        })
+        .catch((err) => res.status(500).send(err.message))
+})
 
 // ADD COMMENT TO POST
+app.post("/comment/post/:postId/:username", (req, res) => {
+    const postId = req.params.postId;
+    const username = req.params.username;
+    const commentText = req.body.commentText;
+    Post.findById(postId).then((result) => {
+        if (result != null && commentText != "") {
+            const comments = result.comments
+            comments.push({ username: username, commentText: commentText })
+            Post.findByIdAndUpdate(postId, { comments: comments })
+                .then(() => res.send("Commented"))
+        }
+        else if (commentText === "") {
+            res.send("Comment Text is empty")
+        }
+        else {
+            res.status(404).send("Post not found")
+        }
+    })
+})
 
 // LIKE A POST
+app.post("/like/post/:postId/:username", (req, res) => {
+    const postId = req.params.postId;
+    const username = req.params.username;
+
+    Post.findById(postId).then((result) => {
+        if (result != null) {
+            const likes = result.likes
+            if (likes.find((e) => e === username) === undefined) {
+                likes.push(username)
+                Post.findByIdAndUpdate(postId, { likes: likes })
+                .then(() => res.send("Liked"))
+            }
+            else{
+                res.send("Already Liked")
+            }
+            
+        }
+        else {
+            res.status(404).send("Post not found")
+        }
+    })
+})
 
 // DISLIKE A POST
 
