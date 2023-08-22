@@ -5,6 +5,9 @@ const jwt = require('jsonwebtoken');
 const Post = require("./Post")
 const mysql = require('mysql');
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 const app = express();
 app.use(express.json())
 
@@ -20,7 +23,7 @@ mongoose.connect(mongoUrl + 'atgdb')
 const connection = mysql.createConnection({
     host: 'db4free.net',
     user: 'omprakash',
-    password: 'omprakash@1',
+    password: process.env.MYSQL_PASSWORD,
     database: 'omprakash'
 });
 
@@ -65,33 +68,67 @@ app.post("/register", (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const username = req.body.username;
-    connection.query(`INSERT IGNORE INTO users 
+
+
+    bcrypt.hash(password, saltRounds, function (err, hash) {
+        if (err) console.log(err.message)
+        // console.log(hash);
+        connection.query(`INSERT IGNORE INTO users 
                     (username, password, email)
                     VALUES 
-                    ("${username}", "${password}", "${email}")`,
-        (err, result, fields) => {
-            if (err) console.log(err.message);
-            let data = JSON.parse(JSON.stringify(result));
-            if (data.affectedRows) {
-                console.log("User Created");
-                const user = {
-                    username: username
+                    ("${username}", "${hash}", "${email}")`,
+            (err, result, fields) => {
+                if (err) console.log(err.message);
+                let data = JSON.parse(JSON.stringify(result));
+                if (data.affectedRows) {
+                    console.log("User Created");
+                    const user = {
+                        username: username
+                    }
+                    jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+                        if (err) {
+                            console.log(err.message)
+                        }
+                        else {
+                            res.status(201).send(token);
+                        }
+                    })
                 }
-                jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
-                    if (err) {
-                        console.log(err.message)
-                    }
-                    else {
-                        res.status(201).send(token);
-                    }
-                })
+                else {
+                    console.log("User Already Exists");
+                    res.status(200).send("User Already Exists")
+                }
             }
-            else {
-                console.log("User Already Exists");
-                res.status(200).send("User Already Exists")
-            }
-        }
-    )
+        )
+    });
+
+    // connection.query(`INSERT IGNORE INTO users 
+    //                 (username, password, email)
+    //                 VALUES 
+    //                 ("${username}", "${password}", "${email}")`,
+    //     (err, result, fields) => {
+    //         if (err) console.log(err.message);
+    //         let data = JSON.parse(JSON.stringify(result));
+    //         if (data.affectedRows) {
+    //             console.log("User Created");
+    //             const user = {
+    //                 username: username
+    //             }
+    //             jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+    //                 if (err) {
+    //                     console.log(err.message)
+    //                 }
+    //                 else {
+    //                     res.status(201).send(token);
+    //                 }
+    //             })
+    //         }
+    //         else {
+    //             console.log("User Already Exists");
+    //             res.status(200).send("User Already Exists")
+    //         }
+    //     }
+    // )
 
 });
 
@@ -103,24 +140,47 @@ app.post("/login", (req, res) => {
     WHERE username = "${username}"`, (err, result, fields) => {
         if (err) console.log(err.message);
         let data = JSON.parse(JSON.stringify(result));
-        // console.log(data.length);
-        if (data.length > 0) {
-            if (data[0].password == password) {
-                console.log("Login Successful");
-                const user = {
-                    username: username
-                }
-                jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
-                    if (err) console.log(err.message);
-                    res.status(200).send(token)
-                })
 
-            } else {
-                console.log("Login Unsuccessful");
-                res.status(404).send("Login Unsuccessful")
-            }
+        if (data.length > 0) {
+            // console.log(password);
+            // console.log(data[0].password);
+
+            bcrypt.compare(password, data[0].password, function (err, result) {
+                // console.log(result);
+                if (err) {
+                    console.log(err.message);
+                }
+                else if (result) {
+                    console.log("Login Successful");
+                    const user = {
+                        username: username
+                    }
+                    jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+                        if (err) console.log(err.message);
+                        res.status(200).send(token)
+                    })
+                }
+                else {
+                    res.status(401).send("Invalid credential")
+                }
+            });
+
+            // if (data[0].password == password) {
+            //     console.log("Login Successful");
+            //     const user = {
+            //         username: username
+            //     }
+            //     jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+            //         if (err) console.log(err.message);
+            //         res.status(200).send(token)
+            //     })
+
+            // } else {
+            //     console.log("Login Unsuccessful");
+            //     res.status(404).send("Login Unsuccessful")
+            // }
         } else {
-            res.send("User Not-found")
+            res.status(404).send("User Not-found")
         }
     });
 });
@@ -130,24 +190,30 @@ app.post("/forgot", (req, res) => {
     const username = req.body.username;
     const new_password = req.body.password;
     // const rePassword = req.body.rePassword;
-    connection.query(`UPDATE users SET password = "${new_password}" 
-        WHERE username = "${username}"`, (err, result, fields) => {
-        if (err) console.log(err.message);
-        let data = JSON.parse(JSON.stringify(result));
-        // console.log(data);
 
-        if (data.affectedRows) {
-            const user = {
-                username: username
+    bcrypt.hash(new_password, saltRounds, function (err, hash) {
+
+        if (err) console.log(err.message);
+
+        connection.query(`UPDATE users SET password = "${hash}" 
+        WHERE username = "${username}"`, (err, result, fields) => {
+            if (err) console.log(err.message);
+            let data = JSON.parse(JSON.stringify(result));
+            // console.log(data);
+
+            if (data.affectedRows) {
+                const user = {
+                    username: username
+                }
+                jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+                    res.status(200).send(token)
+                })
+                console.log("Password Updated");
             }
-            jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
-                res.status(200).send(token)
-            })
-            console.log("Password Updated");
-        }
-        else {
-            res.status(403).send("Invalid Input");
-        }
+            else {
+                res.status(403).send("Invalid Input");
+            }
+        });
     });
 
 });
@@ -312,7 +378,7 @@ app.post("/like/post/:postId", fetchToken, (req, res) => {
     jwt.verify(req.token, secretKey, (err, authData) => {
         if (err) {
             res.status(401).send(err.message);
-        } 
+        }
         else {
             const username = authData.user.username;
             Post.findById(postId).then((result) => {
@@ -327,13 +393,13 @@ app.post("/like/post/:postId", fetchToken, (req, res) => {
                         console.log("Already Liked");
                         res.send("Already Liked")
                     }
-        
+
                 }
                 else {
                     res.status(404).send("Post not found")
                 }
             })
-        } 
+        }
     })
 })
 
