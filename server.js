@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const Post = require("./Post")
 const mysql = require('mysql');
 
@@ -21,6 +22,31 @@ const connection = mysql.createConnection({
     password: 'omprakash@1',
     database: 'omprakash'
 });
+
+// JWT 
+function fetchToken(req, res, next) {
+    const authBearer = req.headers['authorization']
+    if (authBearer !== undefined) {
+        token = authBearer.split(" ")[1];
+        console.log(token);
+        req.token = token;
+        next()
+    }
+    else {
+        res.send("Invalid token")
+    }
+}
+
+app.get("/test", fetchToken, (req, res) => {
+    jwt.verify(req.token, "secretKey", (err, authData) => {
+        if (err) {
+            res.send(err.message);
+        }
+        else{
+            res.send(authData);
+        }
+    }) 
+})
 
 
 app.get("/", (req, res) => {
@@ -57,7 +83,18 @@ app.post("/register", (req, res) => {
             let data = JSON.parse(JSON.stringify(result));
             if (data.affectedRows) {
                 console.log("User Created");
-                res.status(201).send("User Created");
+                const user = {
+                    username: username,
+                    password: password
+                }
+                jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
+                    if (err) {
+                        console.log(err.message)
+                    }
+                    else {
+                        res.status(201).send(token);
+                    }
+                })
             }
             else {
                 console.log("User Already Exists");
@@ -79,9 +116,19 @@ app.post("/login", (req, res) => {
         // console.log(data.length);
         if (data.length > 0) {
             if (data[0].password == password) {
-                res.status(200).send("Login Successful")
+                console.log("Login Successful");
+                const user = {
+                    username: username,
+                    password: password
+                }
+                jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
+                    if(err) console.log(err.message);
+                    res.status(200).send(token)
+                })
+
             } else {
-                res.status(404).send("Login Unuccessful")
+                console.log("Login Unsuccessful");
+                res.status(404).send("Login Unsuccessful")
             }
         } else {
             res.send("User Not-found")
@@ -98,10 +145,17 @@ app.post("/forgot", (req, res) => {
         WHERE username = "${username}"`, (err, result, fields) => {
         if (err) console.log(err.message);
         let data = JSON.parse(JSON.stringify(result));
-        console.log(data);
+        // console.log(data);
 
         if (data.affectedRows) {
-            res.status(200).send("Password Updated");
+            const user = {
+                username: username,
+                password: new_password
+            }
+            jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
+                res.status(200).send(token)
+            })
+            console.log("Password Updated");
         }
         else {
             res.status(403).send("Invalid Input");
@@ -111,7 +165,7 @@ app.post("/forgot", (req, res) => {
 });
 
 // CREATE POST
-app.post("/createpost/:username", (req, res) => {
+app.post("/createpost/:username", fetchToken, (req, res) => {
     const username = req.params.username
     const title = req.body.title;
     const body = req.body.body;
@@ -122,6 +176,7 @@ app.post("/createpost/:username", (req, res) => {
     })
 
     post.save().then(() => {
+        console.log("Post Created");
         res.status(201).send("Post created")
     }).catch((err) => res.status(500).send(err.message))
 })
@@ -217,12 +272,12 @@ app.post("/like/post/:postId/:username", (req, res) => {
             if (likes.find((e) => e === username) === undefined) {
                 likes.push(username)
                 Post.findByIdAndUpdate(postId, { likes: likes })
-                .then(() => res.send("Liked"))
+                    .then(() => res.send("Liked"))
             }
-            else{
+            else {
                 res.send("Already Liked")
             }
-            
+
         }
         else {
             res.status(404).send("Post not found")
