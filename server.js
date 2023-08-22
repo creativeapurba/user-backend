@@ -28,12 +28,12 @@ function fetchToken(req, res, next) {
     const authBearer = req.headers['authorization']
     if (authBearer !== undefined) {
         token = authBearer.split(" ")[1];
-        console.log(token);
+        // console.log(token);
         req.token = token;
         next()
     }
     else {
-        res.send("Invalid token")
+        res.status(401).send("Missing token")
     }
 }
 
@@ -169,16 +169,24 @@ app.post("/createpost/:username", fetchToken, (req, res) => {
     const username = req.params.username
     const title = req.body.title;
     const body = req.body.body;
-    const post = new Post({
-        username: username,
-        title: title,
-        body: body
-    })
 
-    post.save().then(() => {
-        console.log("Post Created");
-        res.status(201).send("Post created")
-    }).catch((err) => res.status(500).send(err.message))
+    jwt.verify(req.token, "secretKey", (err, authData)=>{
+        if (err) res.status(401).send(err.message);
+        else if (username === authData.user.username){
+            const post = new Post({
+                username: username,
+                title: title,
+                body: body
+            })
+            post.save().then(() => {
+                console.log("Post Created");
+                res.status(201).send("Post created")
+            }).catch((err) => res.status(500).send(err.message))
+        }
+        else{
+            res.send("Username Missmatch")
+        }
+    })
 })
 
 // READ POSTS
