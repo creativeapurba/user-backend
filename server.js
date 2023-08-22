@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require("express");
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
@@ -8,8 +9,8 @@ const app = express();
 app.use(express.json())
 
 // MONGODB DETAILS
-const dbUser = "atg"
-const dbPassword = "c3pkJgKLCcQgqoEI"
+const dbUser = "atg";
+const dbPassword = process.env.MONGODB_PASSWORD;
 const mongoUrl = `mongodb+srv://${dbUser}:${dbPassword}@cluster0.m05ti.mongodb.net/`
 mongoose.connect(mongoUrl + 'atgdb')
     .then(() => console.log("MongoDB Connected"))
@@ -24,6 +25,7 @@ const connection = mysql.createConnection({
 });
 
 // JWT 
+const secretKey = process.env.SECRET_KEY;
 function fetchToken(req, res, next) {
     const authBearer = req.headers['authorization']
     if (authBearer !== undefined) {
@@ -37,18 +39,7 @@ function fetchToken(req, res, next) {
     }
 }
 
-app.get("/test", fetchToken, (req, res) => {
-    jwt.verify(req.token, "secretKey", (err, authData) => {
-        if (err) {
-            res.send(err.message);
-        }
-        else{
-            res.send(authData);
-        }
-    }) 
-})
-
-
+// HOME ROUTE
 app.get("/", (req, res) => {
     connection.query('SELECT * FROM users', function (error, results, fields) {
         if (error) throw error;
@@ -84,10 +75,9 @@ app.post("/register", (req, res) => {
             if (data.affectedRows) {
                 console.log("User Created");
                 const user = {
-                    username: username,
-                    password: password
+                    username: username
                 }
-                jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
+                jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
                     if (err) {
                         console.log(err.message)
                     }
@@ -118,11 +108,10 @@ app.post("/login", (req, res) => {
             if (data[0].password == password) {
                 console.log("Login Successful");
                 const user = {
-                    username: username,
-                    password: password
+                    username: username
                 }
-                jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
-                    if(err) console.log(err.message);
+                jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
+                    if (err) console.log(err.message);
                     res.status(200).send(token)
                 })
 
@@ -149,10 +138,9 @@ app.post("/forgot", (req, res) => {
 
         if (data.affectedRows) {
             const user = {
-                username: username,
-                password: new_password
+                username: username
             }
-            jwt.sign({ user }, "secretKey", { expiresIn: "300s" }, (err, token) => {
+            jwt.sign({ user }, secretKey, { expiresIn: "300s" }, (err, token) => {
                 res.status(200).send(token)
             })
             console.log("Password Updated");
@@ -170,9 +158,9 @@ app.post("/createpost/:username", fetchToken, (req, res) => {
     const title = req.body.title;
     const body = req.body.body;
 
-    jwt.verify(req.token, "secretKey", (err, authData)=>{
+    jwt.verify(req.token, secretKey, (err, authData) => {
         if (err) res.status(401).send(err.message);
-        else if (username === authData.user.username){
+        else if (username === authData.user.username) {
             const post = new Post({
                 username: username,
                 title: title,
@@ -183,117 +171,172 @@ app.post("/createpost/:username", fetchToken, (req, res) => {
                 res.status(201).send("Post created")
             }).catch((err) => res.status(500).send(err.message))
         }
-        else{
+        else {
             res.send("Username Missmatch")
         }
     })
 })
 
 // READ POSTS
-app.get("/posts/:username", (req, res) => {
-    const username = req.params.username;
-    Post.find({ username: username }).then((result) => {
-        if (result.length > 0) {
-            res.status(200).send(result)
-        }
-        else {
-            res.status(404).send("User does not have any post")
+app.get("/posts/:username", fetchToken, (req, res) => {
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        } else {
+            const username = req.params.username;
+            Post.find({ username: username }).then((result) => {
+                if (result.length > 0) {
+                    res.status(200).send(result)
+                }
+                else {
+                    console.log(username + " does not have any post");
+                    res.status(404).send(username + " does not have any post")
+                }
+            })
         }
     })
 })
-app.get("/post/:postId", (req, res) => {
+app.get("/post/:postId", fetchToken, (req, res) => {
     const postId = req.params.postId;
-    // console.log(postId);
-    Post.findById(postId).then((result) => {
-        if (result != null) {
-            res.status(200).send(result)
-        }
-        else {
-            res.status(404).send("Post not found")
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        } else {
+            Post.findById(postId).then((result) => {
+                if (result != null) {
+                    res.status(200).send(result)
+                }
+                else {
+                    res.status(404).send("Post not found")
+                }
+            })
         }
     })
+
 })
 
 // UPDATE POST
-app.put("/posts/:postId", (req, res) => {
+app.put("/post/:postId", fetchToken, (req, res) => {
     const postId = req.params.postId;
     const newTitle = req.body.title;
     const newBody = req.body.body;
 
-    Post.findOneAndUpdate({ _id: postId }, { title: newTitle, body: newBody })
-        .then((result) => {
-            if (result != null) {
-                res.status(200).send("Updated")
-            }
-            else {
-                res.status(404).send("No Record found")
-            }
-        })
-        .catch((err) => res.status(500).send(err.message))
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        }
+        else {
+            Post.findById(postId).then((result) => {
+                if (result != null) {
+                    if (result.username == authData.user.username) {
+                        Post.findOneAndUpdate({ _id: postId }, { title: newTitle, body: newBody })
+                            .then((result) => {
+                                res.status(200).send("Updated")
+                            })
+                            .catch((err) => res.status(500).send(err.message))
+                    }
+                    else {
+                        res.send("Post creator can update only")
+                    }
+                }
+                else {
+                    res.status(404).send("Post not found")
+                }
+            })
+        }
+    })
 
 })
 
 // DELETE POST
-app.delete("/posts/:postId", (req, res) => {
+app.delete("/post/:postId", fetchToken, (req, res) => {
     const postId = req.params.postId;
-    Post.findOneAndDelete({ _id: postId })
-        .then((result) => {
-            if (result != null) {
-                res.status(200).send("Deleted")
-            }
-            else {
-                res.status(404).send("No Record found")
-            }
-        })
-        .catch((err) => res.status(500).send(err.message))
+
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        }
+        else {
+            Post.findById(postId).then((result) => {
+                if (result != null) {
+                    if (result.username == authData.user.username) {
+                        Post.findOneAndDelete({ _id: postId })
+                            .then((result) => {
+                                res.status(200).send("Deleted")
+                            })
+                            .catch((err) => res.status(500).send(err.message))
+                    }
+                    else {
+                        res.send("Post creator can delete only")
+                    }
+                }
+                else {
+                    res.status(404).send("Post not found")
+                }
+            })
+        }
+    })
 })
 
 // ADD COMMENT TO POST
-app.post("/comment/post/:postId/:username", (req, res) => {
+app.post("/comment/post/:postId", fetchToken, (req, res) => {
     const postId = req.params.postId;
-    const username = req.params.username;
     const commentText = req.body.commentText;
-    Post.findById(postId).then((result) => {
-        if (result != null && commentText != "") {
-            const comments = result.comments
-            comments.push({ username: username, commentText: commentText })
-            Post.findByIdAndUpdate(postId, { comments: comments })
-                .then(() => res.send("Commented"))
-        }
-        else if (commentText === "") {
-            res.send("Comment Text is empty")
-        }
-        else {
-            res.status(404).send("Post not found")
+
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        } else {
+            Post.findById(postId).then((result) => {
+                if (result != null && commentText !== undefined) {
+                    const comments = result.comments
+                    comments.push({ username: authData.user.username, commentText: commentText })
+                    Post.findByIdAndUpdate(postId, { comments: comments })
+                        .then(() => res.send("Commented"))
+                }
+                else if (commentText === undefined) {
+                    res.send("Comment Text is empty")
+                }
+                else {
+                    res.status(404).send("Post not found")
+                }
+            })
         }
     })
 })
 
 // LIKE A POST
-app.post("/like/post/:postId/:username", (req, res) => {
+app.post("/like/post/:postId", fetchToken, (req, res) => {
     const postId = req.params.postId;
-    const username = req.params.username;
 
-    Post.findById(postId).then((result) => {
-        if (result != null) {
-            const likes = result.likes
-            if (likes.find((e) => e === username) === undefined) {
-                likes.push(username)
-                Post.findByIdAndUpdate(postId, { likes: likes })
-                    .then(() => res.send("Liked"))
-            }
-            else {
-                res.send("Already Liked")
-            }
-
-        }
+    jwt.verify(req.token, secretKey, (err, authData) => {
+        if (err) {
+            res.status(401).send(err.message);
+        } 
         else {
-            res.status(404).send("Post not found")
-        }
+            const username = authData.user.username;
+            Post.findById(postId).then((result) => {
+                if (result != null) {
+                    const likes = result.likes
+                    if (likes.find((e) => e === username) === undefined) {
+                        likes.push(username)
+                        Post.findByIdAndUpdate(postId, { likes: likes })
+                            .then(() => res.send("Liked"))
+                    }
+                    else {
+                        console.log("Already Liked");
+                        res.send("Already Liked")
+                    }
+        
+                }
+                else {
+                    res.status(404).send("Post not found")
+                }
+            })
+        } 
     })
 })
 
-// DISLIKE A POST
 
 app.listen(8080, () => {
     console.log("Listening on port 8080");
