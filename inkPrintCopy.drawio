@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-09-16T14:15:30.223Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36" etag="sw_D6-NbIUdE2Pv3xq6_" version="21.7.5" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-09-16T14:28:23.875Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36" etag="PQbLM7qBVWcFYw2oIpmr" version="21.7.5" type="github" pages="2">
   <diagram id="R2lEEEUBdFMjLlhIrx00" name="Page-1">
     <mxGraphModel dx="1500" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
       <root>
@@ -55,7 +55,7 @@
         <mxCell id="m9-QmPJvrPLCAcelXVJu-16" value="password&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="m9-QmPJvrPLCAcelXVJu-10" vertex="1">
           <mxGeometry y="120" width="170" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="m9-QmPJvrPLCAcelXVJu-17" value="whatsApp&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="m9-QmPJvrPLCAcelXVJu-10" vertex="1">
+        <mxCell id="m9-QmPJvrPLCAcelXVJu-17" value="phone&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="m9-QmPJvrPLCAcelXVJu-10" vertex="1">
           <mxGeometry y="150" width="170" height="30" as="geometry" />
         </mxCell>
         <mxCell id="m9-QmPJvrPLCAcelXVJu-18" value="department&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="m9-QmPJvrPLCAcelXVJu-10" vertex="1">
@@ -170,7 +170,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="KwHu_mfaWXveZmUqD01G" name="Page-2">
-    <mxGraphModel dx="2617" dy="1815" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2163" dy="1818" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -182,6 +182,11 @@
         </mxCell>
         <mxCell id="XYAwkKoKCtPydiSoMp42-3" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="230" y="-395" width="240" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="W_pVH4N_2zSMvpV2k8DQ-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="XYAwkKoKCtPydiSoMp42-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="359.5" y="-650" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="XYAwkKoKCtPydiSoMp42-6" value="Backend" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="300" y="-300" width="120" height="60" as="geometry" />
@@ -300,6 +305,18 @@
         </mxCell>
         <mxCell id="XYAwkKoKCtPydiSoMp42-49" value="AWS S3" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="520" y="-240" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="W_pVH4N_2zSMvpV2k8DQ-1" value="SMTP" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="187" y="-680" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="W_pVH4N_2zSMvpV2k8DQ-2" value="WhatsApp API" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="422" y="-680" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="W_pVH4N_2zSMvpV2k8DQ-3" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="W_pVH4N_2zSMvpV2k8DQ-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="290" y="-390" as="sourcePoint" />
+            <mxPoint x="420" y="-650" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
